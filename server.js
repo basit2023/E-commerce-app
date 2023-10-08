@@ -3,6 +3,7 @@ import Router from './routes/Router.js';
 const app=express();
 import connectDB from './config/db.js';
 import router from './routes/productRouter.js'
+import CatagoryRouter from './routes/catagoryRouter.js';
 
 
 import { config } from 'dotenv';
@@ -16,6 +17,7 @@ connectDB();
 //Routing
 app.use('/user',Router)
 app.use('/product',router)
+app.use('/catagory',CatagoryRouter);
 
 app.get('/',(req,res)=>{
     console.log("This is the E-Commercer Application")
