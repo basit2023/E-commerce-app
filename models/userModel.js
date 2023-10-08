@@ -22,7 +22,11 @@ const userSchema= new mongoose.Schema({
       address: {
         type: {},
         required: true,
-      }
+      },
+      role: {
+        type: Number,
+        default: 0,
+      },
 })
 const userModel= mongoose.model("users",userSchema)
 export default userModel;
