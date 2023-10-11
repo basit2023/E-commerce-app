@@ -2,7 +2,9 @@ import userModel from "../models/userModel.js";
 import { hashPassword,comparePassword } from "../Auth/authHelper.js";
 import JWT from "jsonwebtoken";
 import orderModel from "../models/orderModel.js";
-
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
+import otpModel from "../models/otpModel.js";
 
 export const registerController = async (req,res) =>{
     try {
@@ -57,7 +59,7 @@ export const registerController = async (req,res) =>{
           });
     }
 }
-
+//log in controller
 export const loginController = async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -118,9 +120,156 @@ export const loginController = async (req, res) => {
     }
   };
 
+
+  // for get password
+
+  export const forgetPasswordController= async (req,res) => {
+    try {
+      const { email}= req.body;
+      // const { email, newPassword}= req.body;
+      if (!email) {
+        res.status(400).send({ message: "Emai is required" });
+      }
+      // if (!newPassword) {
+      //   res.status(400).send({ message: "New Password is required" });
+      // }
+
+      const user= await userModel.findOne({email});
+      console.log("the user is:",user);
+      const transporter=nodemailer.createTransport({
+        service:"gmail",
+        auth:{
+          user:'engr.basitofficial@gmail.com',
+          pass:'vsic ymry qnbe mzcf'
+        },
+        // secure: true, 
+        // port: 465,
+      })
+      console.log(email)
+      const otp=crypto.randomBytes(6).toString('hex');
+      const mailoption={
+        from: 'engr.basitofficial@gmail.com',
+        to: email,
+        subject: "Sending Email",
+        text: `Your ATP is ${otp}` 
+      }
+      console.log(mailoption)
+      transporter.sendMail(mailoption);
+      res.status(200).send({success: true, message:"Email has been send"})
+
+      // save OTP to data base
+      const saveOTP = async (email, otp) => {
+        const otpDocument = new OTPModel({ email, otp });
+        await otpDocument.save();
+      };
+     
+      // if(!user){
+      //   res.status(404).send({
+      //     success:false,
+      //     message: "The email is not registed, please try another"
+      //   });
+      // }
+      // const hash= await hashPassword(newPassword);
+      // await userModel.findByIdAndUpdate(user._id,{password:hash})
+      // res.status(201).send({
+      //   success:true,
+      //   message: "Password update successfully"
+      // })
+    } catch (error) {
+      console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Something went wrong",
+      error,
+    });
+    }
+  }
+
+  // update possward
+  export const verifyOTP= async (req,res) =>{
+         try {
+          const {email, otp}=req.body;
+          if(!email){
+           res.status(404).send({success:false, message:"Enter your email"})
+          }
+          if(!otp){
+           res.status(404).send({success:false, message:"Enter your otp that send to email"})
+          }
+          const user= await otpModel.find({email:email})
+          if(otp===user.opt){
+           console.log("OTP mached");
+           // const hash= await hashPassword(newPassword);
+           // await userModel.findByIdAndUpdate(user._id,{password:hash})
+           // res.status(201).send({
+           //   success:true,
+           //   message: "Password update successfully"
+       // })}
+         } 
+        }catch (error) {
+          console.log(error);
+          res.status(500).send({
+            success: false,
+            message: "Something went wrong",
+            error,
+          });
+         }
+
+
+        
+  }
+  //reset password
+  export const resetPasswordController = async (req, res) => {
+    try {
+      const { email, password, newPassword } = req.body;
+      if (!email) {
+        return res.status(400).json({ success: false, message: "Email is required" });
+      }
+      if (!password) {
+        return res.status(400).json({ success: false, message: "Password is required" });
+      }
+  
+      // Find the user by email
+      const user = await userModel.findOne({ email });
+      //user exists
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+      // Compare password
+      const passwordMatch = await comparePassword(password, user.password);
+      if (!passwordMatch) {
+        return res.status(400).json({ success: false, message: "The old password is not matched" });
+      }
+  
+      // Update password
+      user.password = newPassword;
+      await user.save();
+  
+      return res.status(200).json({ success: true, message: "Password updated successfully" });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Something went wrong", error });
+    }
+  };
+  
+
+export const createOrder= async(req,res)=>{
+       try {
+        const {productId, payment, buyer,status}= req.body;
+        await new orderModel(req.body).save()
+        res.status(201).send({success:true, message:"Your order created Successfully"})
+       } catch (error) {
+        console.log(error)
+        res.status(404).send({success:false, message:"Something went wrong while creating order"})
+       }
+       
+}
+
+
+
   export const getOrderController= async (req,res) => {
     try {
-        const orders= await orderModel.find({buyer:req.user._id})
+      
+        const orders= await orderModel.find({buyer:req.user})
         .populate("products","-photo")
         .populate("buyer","name")
         res.json(orders);
