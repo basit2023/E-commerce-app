@@ -81,6 +81,7 @@ export const showCartDetails = async (req, res) => {
       .populate({
         path: 'items.product',
         model: 'Products',
+        select: '-_id -createdAt -updatedAt -__v',
       })
       // .populate("users");
       // .skip(skip).limit(pageSize);

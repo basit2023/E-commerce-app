@@ -16,17 +16,17 @@ const userSchema= new mongoose.Schema({
         required: true,
       },
       phone: {
-        type: String,
+        type: Number,
         required: true,
       },
       address: {
-        type: {},
+        type: String,
         required: true,
       },
-      role: {
-        type: Number,
-        default: 0,
-      },
+      // role: {
+      //   type: Number,
+      //   default: 0,
+      // },
 })
 const userModel= mongoose.model("users",userSchema)
 export default userModel;
